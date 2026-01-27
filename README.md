@@ -205,19 +205,18 @@ proximus_customers_1000.csv
 
 ---
 
+## Intended Use
+
+This dataset is intended for:
+- Education and coursework
+- Learning supervised classification
+- Portfolio and demonstration projects
+
+It is **not** intended to represent real Proximus customers or to be used for commercial decision-making.
+
+
+
 ## License
 
 This dataset is intended for **educational and learning purposes only**.
 
----
-
-## Final note (this matters)
-
-This project demonstrates **data-science thinking**, not just model training:
-
-* Feature engineering
-* Distribution design
-* Business logic translation
-* Ethical data creation
-
-That’s what makes it portfolio-worthy.
