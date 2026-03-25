@@ -1,0 +1,10 @@
+$schema: https://azuremlschemas.azureedge.net/latest/data.schema.json
+
+name: churn-data-v1
+version: "1"
+type: uri_file
+description: >
+  Proximus Belgian telecom churn dataset — 1 000 customers.
+  Features: plan info, demographics, usage, billing, network quality.
+  Target: churn (Yes/No).
+path: azureml://datastores/datastore_churn_blob/paths/proximus_customers_1000.csv

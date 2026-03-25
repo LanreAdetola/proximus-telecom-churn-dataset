@@ -1,0 +1,131 @@
+$schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
+type: pipeline
+
+display_name: proximus-churn-training-pipeline
+description: >
+  End-to-end churn prediction pipeline: data prep → training → evaluation.
+  Uses identity-based datastore access — no credentials in pipeline definition.
+
+experiment_name: proximus-churn-experiment
+
+settings:
+  default_compute: azureml:cpu-cluster
+  default_datastore: azureml:datastore_churn_blob
+  continue_on_step_failure: false
+
+inputs:
+  raw_data:
+    type: uri_file
+    path: azureml:churn-data-v1@latest
+  test_size:
+    type: number
+    default: 0.2
+  n_estimators:
+    type: integer
+    default: 200
+  max_depth:
+    type: integer
+    default: 10
+
+jobs:
+  # ---------- Step 1: Data Preparation ----------
+  data_prep:
+    type: command
+    component:
+      name: data_prep
+      version: "1"
+      display_name: Data Preparation
+      type: command
+      inputs:
+        input_data:
+          type: uri_file
+        test_size:
+          type: number
+          default: 0.2
+      outputs:
+        output_train:
+          type: uri_folder
+        output_test:
+          type: uri_folder
+      code: ../src/data_prep
+      environment: azureml:churn-training-env@latest
+      command: >-
+        python prep.py
+        --input-data ${{inputs.input_data}}
+        --output-train ${{outputs.output_train}}
+        --output-test ${{outputs.output_test}}
+        --test-size ${{inputs.test_size}}
+    inputs:
+      input_data: ${{parent.inputs.raw_data}}
+      test_size: ${{parent.inputs.test_size}}
+    outputs:
+      output_train:
+        mode: rw_mount
+      output_test:
+        mode: rw_mount
+
+  # ---------- Step 2: Model Training ----------
+  training:
+    type: command
+    component:
+      name: model_training
+      version: "1"
+      display_name: Model Training
+      type: command
+      inputs:
+        train_data:
+          type: uri_folder
+        n_estimators:
+          type: integer
+          default: 200
+        max_depth:
+          type: integer
+          default: 10
+      outputs:
+        model_output:
+          type: uri_folder
+      code: ../src/training
+      environment: azureml:churn-training-env@latest
+      command: >-
+        python train.py
+        --train-data ${{inputs.train_data}}
+        --model-output ${{outputs.model_output}}
+        --n-estimators ${{inputs.n_estimators}}
+        --max-depth ${{inputs.max_depth}}
+    inputs:
+      train_data: ${{parent.jobs.data_prep.outputs.output_train}}
+      n_estimators: ${{parent.inputs.n_estimators}}
+      max_depth: ${{parent.inputs.max_depth}}
+    outputs:
+      model_output:
+        mode: rw_mount
+
+  # ---------- Step 3: Evaluation ----------
+  evaluation:
+    type: command
+    component:
+      name: model_evaluation
+      version: "1"
+      display_name: Model Evaluation
+      type: command
+      inputs:
+        model_input:
+          type: uri_folder
+        test_data:
+          type: uri_folder
+      outputs:
+        evaluation_output:
+          type: uri_folder
+      code: ../src/evaluation
+      environment: azureml:churn-training-env@latest
+      command: >-
+        python evaluate.py
+        --model-input ${{inputs.model_input}}
+        --test-data ${{inputs.test_data}}
+        --evaluation-output ${{outputs.evaluation_output}}
+    inputs:
+      model_input: ${{parent.jobs.training.outputs.model_output}}
+      test_data: ${{parent.jobs.data_prep.outputs.output_test}}
+    outputs:
+      evaluation_output:
+        mode: rw_mount

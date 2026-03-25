@@ -1,0 +1,10 @@
+$schema: https://azuremlschemas.azureedge.net/latest/environment.schema.json
+
+name: churn-training-env
+version: "1"
+description: >
+  Training environment for Proximus churn prediction.
+  Includes scikit-learn, LightGBM, pandas, and MLflow.
+
+image: mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu22.04:latest
+conda_file: conda_deps.yml
