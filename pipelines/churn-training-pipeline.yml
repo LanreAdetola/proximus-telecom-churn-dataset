@@ -10,7 +10,7 @@ experiment_name: proximus-churn-experiment
 
 settings:
   default_compute: azureml:cpu-cluster
-  default_datastore: azureml:ds_proximus_churn_raw
+  default_datastore: azureml:datastore_churn_blob
   continue_on_step_failure: false
 
 inputs:

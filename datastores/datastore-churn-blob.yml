@@ -1,5 +1,5 @@
 $schema: https://azuremlschemas.azureedge.net/latest/azureBlob.schema.json
-name: ds_proximus_churn_raw
+name: datastore_churn_blob
 type: azure_blob
 description: Raw churn data from Proximus data lake
 account_name: stproximusdatalake
