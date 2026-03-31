@@ -1,10 +1,6 @@
 $schema: https://azuremlschemas.azureedge.net/latest/azureBlob.schema.json
-
-name: datastore_churn_blob
+name: ds_proximus_churn_raw
 type: azure_blob
-description: >
-  Identity-based blob datastore for Proximus churn data.
-  No credentials stored — uses workspace managed identity.
-
+description: Raw churn data from Proximus data lake
 account_name: stproximusdatalake
 container_name: churn-data
