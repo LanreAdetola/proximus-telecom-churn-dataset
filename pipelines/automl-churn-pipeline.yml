@@ -1,0 +1,104 @@
+$schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
+type: pipeline
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Pipeline with AutoML Step: Proximus Churn Prediction
+# ─────────────────────────────────────────────────────────────────────────────
+# This pipeline runs AutoML as a step inside a pipeline, which is more
+# MLOps-aligned than a standalone job. It allows you to:
+#   1. Add pre-processing steps before AutoML
+#   2. Add post-processing steps (evaluation, registration) after AutoML
+#   3. Automate the full flow via GitHub Actions
+#
+# How to submit:
+#   az ml job create --file pipelines/automl-churn-pipeline.yml
+# ─────────────────────────────────────────────────────────────────────────────
+
+display_name: automl-churn-pipeline
+experiment_name: proximus-churn-automl-pipeline
+description: >
+  End-to-end pipeline: data prep → AutoML classification → evaluation.
+  Discovers the best algorithm automatically, then evaluates on a held-out set.
+
+settings:
+  default_compute: azureml:cpu-cluster
+  default_datastore: azureml:datastore_churn_blob
+  continue_on_step_failure: false
+
+inputs:
+  raw_data:
+    type: uri_file
+    path: azureml:churn-data-v1:1
+  test_size:
+    type: number
+    default: 0.2
+
+jobs:
+  # ──────── Step 1: Data Preparation (reuses your existing component) ────────
+  data_prep:
+    type: command
+    component:
+      name: data_prep_automl
+      version: "1"
+      display_name: Data Preparation for AutoML
+      type: command
+      inputs:
+        input_data:
+          type: uri_file
+        test_size:
+          type: number
+          default: 0.2
+      outputs:
+        output_train:
+          type: mltable          # AutoML requires MLTable format
+        output_test:
+          type: uri_folder
+      code: ../src/data_prep_automl
+      environment: azureml:churn-training-env@latest
+      command: >-
+        python prep_automl.py
+        --input-data ${{inputs.input_data}}
+        --output-train ${{outputs.output_train}}
+        --output-test ${{outputs.output_test}}
+        --test-size ${{inputs.test_size}}
+    inputs:
+      input_data: ${{parent.inputs.raw_data}}
+      test_size: ${{parent.inputs.test_size}}
+    outputs:
+      output_train:
+        mode: rw_mount
+      output_test:
+        mode: rw_mount
+
+  # ──────── Step 2: AutoML Classification ────────────────────────────────────
+  automl_classification:
+    type: automl
+    task: classification
+    primary_metric: AUC_weighted
+
+    training_data: ${{parent.jobs.data_prep.outputs.output_train}}
+    target_column_name: churn
+
+    featurization:
+      mode: auto
+
+    training:
+      blocked_training_algorithms:
+        - TabNet
+      enable_model_explainability: true
+      enable_vote_ensemble: true
+      enable_stack_ensemble: true
+
+    limits:
+      timeout_minutes: 60
+      trial_timeout_minutes: 10
+      max_trials: 20
+      max_concurrent_trials: 2
+      enable_early_termination: true
+
+    n_cross_validations: 5
+
+    # Outputs: AutoML produces best_model as output
+    outputs:
+      best_model:
+        type: mlflow_model

@@ -1,7 +1,18 @@
-name: Train Churn Model
+name: Run AutoML Churn Classification
 
 on:
   workflow_dispatch:
+    inputs:
+      max_trials:
+        description: "Maximum number of AutoML trials"
+        required: false
+        default: "20"
+        type: string
+      timeout_minutes:
+        description: "Total AutoML job timeout (minutes)"
+        required: false
+        default: "60"
+        type: string
 
 permissions:
   id-token: write
@@ -12,7 +23,7 @@ env:
   AZURE_RESOURCE_GROUP: rg-proximus-churn-dev
 
 jobs:
-  submit-pipeline:
+  submit-automl:
     runs-on: ubuntu-latest
     environment: dev
 
@@ -54,10 +65,17 @@ jobs:
           az ml data create \
             --file data/data-asset-churn-v1.yml
 
-      - name: Submit training pipeline
+      - name: Patch AutoML limits from inputs
+        run: |
+          sed -i \
+            -e 's/max_trials: .*/max_trials: ${{ inputs.max_trials }}/' \
+            -e 's/timeout_minutes: .*/timeout_minutes: ${{ inputs.timeout_minutes }}/' \
+            jobs/automl-churn-classification.yml
+
+      - name: Submit AutoML job
         run: |
           az ml job create \
-            --file pipelines/churn-training-pipeline.yml \
+            --file jobs/automl-churn-classification.yml \
             --stream
 
       - name: Azure Logout

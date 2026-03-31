@@ -1,0 +1,83 @@
+$schema: https://azuremlschemas.azureedge.net/latest/autoMLJob.schema.json
+type: automl
+
+# ─────────────────────────────────────────────────────────────────────────────
+# AutoML Classification Job: Proximus Churn Prediction
+# ─────────────────────────────────────────────────────────────────────────────
+# Purpose:
+#   Explore multiple classification algorithms automatically to find the
+#   best-performing model for predicting customer churn (Yes/No).
+#
+# Data Asset:
+#   Uses the registered data asset churn-data-v1 (uri_file) which points to
+#   proximus_customers_1000.csv in datastore_churn_blob.
+#
+# How to submit (CLI v2):
+#   az ml job create --file jobs/automl-churn-classification.yml
+# ─────────────────────────────────────────────────────────────────────────────
+
+display_name: automl-churn-classification
+experiment_name: proximus-churn-automl
+description: >
+  AutoML classification job exploring optimal models for Proximus customer
+  churn prediction. Target column: churn (Yes/No). Primary metric: AUC weighted.
+
+compute: azureml:cpu-cluster
+
+# ─── Task Configuration ─────────────────────────────────────────────────────
+task: classification
+
+primary_metric: AUC_weighted  # Best for imbalanced binary classification
+
+training_data:
+  type: uri_file
+  path: azureml:churn-data-v1:1
+
+target_column_name: churn
+
+# ─── Featurization ──────────────────────────────────────────────────────────
+# AutoML handles missing values, encoding, scaling automatically.
+# "auto" lets AutoML decide the best featurization per column.
+featurization:
+  mode: auto
+  # Blocked transformers: uncomment to prevent specific transforms
+  # blocked_transformers:
+  #   - TextTargetEncoder
+
+# ─── Training Configuration ────────────────────────────────────────────────
+training:
+  # Enable specific algorithms (all are enabled by default when not specified)
+  # Allowed classifiers: LogisticRegression, SGD, MultinomialNaiveBayes,
+  # BernoulliNaiveBayes, SVM, LinearSVM, KNN, DecisionTree,
+  # RandomForest, ExtremeRandomTrees, LightGBM, GradientBoosting,
+  # XGBoostClassifier, TabNet
+  #
+  # Block algorithms that are slow or not suitable:
+  blocked_training_algorithms:
+    - TabNet              # Deep learning — overkill for 1K rows
+    - MultinomialNaiveBayes
+  enable_model_explainability: true    # Generate feature importance
+  enable_vote_ensemble: true           # Try a VotingEnsemble
+  enable_stack_ensemble: true          # Try a StackEnsemble
+  enable_onnx_compatible_models: false # Set true if you need ONNX export
+
+# ─── Limits ─────────────────────────────────────────────────────────────────
+# Controls cost and duration. Critical for the exam — know these well.
+limits:
+  timeout_minutes: 60         # Total job timeout
+  trial_timeout_minutes: 10   # Max time per individual model trial
+  max_trials: 20              # Max number of model trials to run
+  max_concurrent_trials: 2    # Parallel trials (≤ max nodes in compute cluster)
+  enable_early_termination: true  # Stop if no improvement after several trials
+
+# ─── Validation ─────────────────────────────────────────────────────────────
+# AutoML needs a validation strategy to evaluate each trial.
+# Options: auto, k-fold, train/validation split, or a separate validation set.
+n_cross_validations: 5   # 5-fold CV — recommended for datasets < 20K rows
+
+# ─── Outputs ────────────────────────────────────────────────────────────────
+# AutoML automatically logs to MLflow:
+#   - Best model artifact
+#   - All trial metrics
+#   - Featurization steps applied
+#   - Feature importance (if enable_model_explainability=true)
