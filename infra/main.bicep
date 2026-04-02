@@ -122,19 +122,6 @@ resource workspace 'Microsoft.MachineLearningServices/workspaces@2024-04-01' = {
     keyVault: keyVault.id
     applicationInsights: appInsights.id
     containerRegistry: acr.id
-    systemDatastoresAuthMode: 'identity'
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Compute (module)
-// ---------------------------------------------------------------------------
-module compute 'modules/compute.bicep' = {
-  name: 'compute-${environment}'
-  params: {
-    workspaceName: workspace.name
-    location: location
-    environment: environment
   }
 }
 
