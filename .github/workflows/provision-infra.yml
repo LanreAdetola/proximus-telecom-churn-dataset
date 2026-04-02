@@ -10,7 +10,6 @@ on:
         type: choice
         options:
           - dev
-          - prod
 
 permissions:
   id-token: write   # OIDC federation
@@ -18,7 +17,6 @@ permissions:
 
 env:
   AZURE_RESOURCE_GROUP_DEV: rg-proximus-churn-dev
-  AZURE_RESOURCE_GROUP_PROD: rg-proximus-churn-prod
 
 jobs:
   deploy-infra:
@@ -43,11 +41,7 @@ jobs:
       - name: Set resource group
         id: rg
         run: |
-          if [ "${{ matrix.environment }}" = "prod" ]; then
-            echo "name=${{ env.AZURE_RESOURCE_GROUP_PROD }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "name=${{ env.AZURE_RESOURCE_GROUP_DEV }}" >> "$GITHUB_OUTPUT"
-          fi
+          echo "name=${{ env.AZURE_RESOURCE_GROUP_DEV }}" >> "$GITHUB_OUTPUT"
 
       - name: Ensure resource group exists
         run: |
@@ -59,6 +53,7 @@ jobs:
       - name: Deploy Bicep template
         uses: azure/arm-deploy@v2
         with:
+          scope: resourcegroup
           resourceGroupName: ${{ steps.rg.outputs.name }}
           template: infra/main.bicep
           parameters: infra/params.${{ matrix.environment }}.json
