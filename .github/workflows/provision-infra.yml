@@ -51,13 +51,29 @@ jobs:
             --tags project=proximus-churn environment=${{ matrix.environment }}
 
       - name: Deploy Bicep template
+        id: deploy
         uses: azure/arm-deploy@v2
         with:
           scope: resourcegroup
           resourceGroupName: ${{ steps.rg.outputs.name }}
+          deploymentName: main-${{ github.run_id }}
           template: infra/main.bicep
           parameters: infra/params.${{ matrix.environment }}.json
           failOnStdErr: false
+
+      - name: Dump deployment errors (if failed)
+        if: failure()
+        run: |
+          RG="${{ steps.rg.outputs.name }}"
+          DEPLOY="main-${{ github.run_id }}"
+
+          echo "Deployment show:"
+          az deployment group show -g "$RG" -n "$DEPLOY" --query "{state:properties.provisioningState,error:properties.error}" -o jsonc || true
+
+          echo "Deployment operations (failed only):"
+          az deployment operation group list -g "$RG" -n "$DEPLOY" \
+            --query "[?properties.provisioningState=='Failed'].{resource:properties.targetResource.resourceName,type:properties.targetResource.resourceType,status:properties.provisioningState,message:properties.statusMessage}" \
+            -o jsonc || true
 
       - name: Azure Logout
         if: always()
