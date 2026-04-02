@@ -6,36 +6,28 @@
 targetScope = 'resourceGroup'
 
 @description('Environment name used for naming convention')
-@allowed(['dev', 'prod'])
+@allowed(['dev'])
 param environment string
 
 @description('Azure region')
 param location string = resourceGroup().location
 
-@description('Base name prefix for all resources')
-param baseName string = 'proximus-churn'
-
 // ---------------------------------------------------------------------------
 // Variables
 // ---------------------------------------------------------------------------
-var suffix = '${baseName}-${environment}'
-var uniqueSuffix = uniqueString(resourceGroup().id, baseName, environment)
-
-// Storage account names must be 3-24 lowercase alphanumeric
-var storageAccountName = 'st${replace(baseName, '-', '')}${uniqueSuffix}'
-var keyVaultName = 'kv-${suffix}'
-var appInsightsName = 'appi-${suffix}'
-var logAnalyticsName = 'law-${suffix}'
-var acrName = 'acr${replace(baseName, '-', '')}${uniqueSuffix}'
-var workspaceName = 'mlw-${suffix}'
+var storageAccountName = 'mlwproxistorage77490c958'
+var keyVaultName = 'mlwproxikeyvaultdabe594b'
+var appInsightsName = 'mlwproxiinsightsaf4152a4'
+var logAnalyticsName = 'mlwproxilogalyti58823f50'
+var workspaceName = 'mlw-proximus-churn-dev'
 
 // ---------------------------------------------------------------------------
 // Storage Account (identity-based access — no account keys)
 // ---------------------------------------------------------------------------
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
-  name: take(storageAccountName, 24)
+  name: storageAccountName
   location: location
-  sku: { name: environment == 'prod' ? 'Standard_ZRS' : 'Standard_LRS' }
+  sku: { name: 'Standard_LRS' }
   kind: 'StorageV2'
   properties: {
     minimumTlsVersion: 'TLS1_2'
@@ -96,18 +88,6 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
 }
 
 // ---------------------------------------------------------------------------
-// Azure Container Registry
-// ---------------------------------------------------------------------------
-resource acr 'Microsoft.ContainerRegistry/registries@2023-11-01-preview' = {
-  name: take(acrName, 50)
-  location: location
-  sku: { name: environment == 'prod' ? 'Standard' : 'Basic' }
-  properties: {
-    adminUserEnabled: false               // identity-based pulls only
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Azure ML Workspace (system-assigned managed identity)
 // ---------------------------------------------------------------------------
 resource workspace 'Microsoft.MachineLearningServices/workspaces@2024-04-01' = {
@@ -121,7 +101,6 @@ resource workspace 'Microsoft.MachineLearningServices/workspaces@2024-04-01' = {
     storageAccount: storageAccount.id
     keyVault: keyVault.id
     applicationInsights: appInsights.id
-    containerRegistry: acr.id
   }
 }
 
@@ -134,7 +113,6 @@ module rbac 'modules/rbac.bicep' = {
     workspacePrincipalId: workspace.identity.principalId
     storageAccountName: storageAccount.name
     keyVaultName: keyVault.name
-    acrName: acr.name
   }
 }
 
@@ -144,4 +122,3 @@ module rbac 'modules/rbac.bicep' = {
 output workspaceName string = workspace.name
 output workspaceId string = workspace.id
 output storageAccountName string = storageAccount.name
-output acrLoginServer string = acr.properties.loginServer

@@ -12,15 +12,11 @@ param storageAccountName string
 @description('Name of the key vault to grant access to')
 param keyVaultName string
 
-@description('Name of the container registry to grant access to')
-param acrName string
-
 // ---------------------------------------------------------------------------
 // Built-in role definition IDs
 // ---------------------------------------------------------------------------
 var storageBlobDataContributor = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
 var keyVaultSecretsOfficer     = 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7'
-var acrPull                    = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
 
 // ---------------------------------------------------------------------------
 // Existing resources
@@ -31,10 +27,6 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' existing 
 
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
   name: keyVaultName
-}
-
-resource acr 'Microsoft.ContainerRegistry/registries@2023-11-01-preview' existing = {
-  name: acrName
 }
 
 // ---------------------------------------------------------------------------
@@ -63,15 +55,3 @@ resource kvRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' =
   }
 }
 
-// ---------------------------------------------------------------------------
-// ACR: AcrPull
-// ---------------------------------------------------------------------------
-resource acrRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(acr.id, workspacePrincipalId, acrPull)
-  scope: acr
-  properties: {
-    principalId: workspacePrincipalId
-    principalType: 'ServicePrincipal'
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', acrPull)
-  }
-}
