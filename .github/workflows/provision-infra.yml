@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 env:
-  AZURE_RESOURCE_GROUP_DEV: rg-proximus-churn-dev
+  AZURE_RESOURCE_GROUP_DEV: rg-proximus-mlops-dev
 
 jobs:
   deploy-infra:
