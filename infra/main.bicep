@@ -104,18 +104,6 @@ resource workspace 'Microsoft.MachineLearningServices/workspaces@2024-04-01' = {
 }
 
 // ---------------------------------------------------------------------------
-// RBAC for workspace managed identity (module)
-// ---------------------------------------------------------------------------
-module rbac 'modules/rbac.bicep' = {
-  name: 'rbac-${environment}'
-  params: {
-    workspacePrincipalId: workspace.identity.principalId
-    storageAccountName: storageAccount.name
-    keyVaultName: keyVault.name
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Outputs
 // ---------------------------------------------------------------------------
 output workspaceName string = workspace.name
