@@ -15,8 +15,12 @@ param keyVaultName string
 // ---------------------------------------------------------------------------
 // Built-in role definition IDs
 // ---------------------------------------------------------------------------
-var storageBlobDataContributor = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
-var keyVaultSecretsOfficer     = 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7'
+var storageBlobDataContributorGuid = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
+var keyVaultSecretsOfficerGuid     = 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7'
+
+// Full role definition resource IDs (used for both name determinism and assignment)
+var storageBlobDataContributorRoleDefId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataContributorGuid)
+var keyVaultSecretsOfficerRoleDefId     = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', keyVaultSecretsOfficerGuid)
 
 // ---------------------------------------------------------------------------
 // Existing resources
@@ -33,12 +37,12 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
 // Storage: Blob Data Contributor
 // ---------------------------------------------------------------------------
 resource storageRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(storageAccount.id, workspacePrincipalId, storageBlobDataContributor)
+  name: guid(storageAccount.id, workspacePrincipalId, storageBlobDataContributorRoleDefId)
   scope: storageAccount
   properties: {
     principalId: workspacePrincipalId
     principalType: 'ServicePrincipal'
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataContributor)
+    roleDefinitionId: storageBlobDataContributorRoleDefId
   }
 }
 
@@ -46,12 +50,12 @@ resource storageRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-
 // Key Vault: Secrets Officer
 // ---------------------------------------------------------------------------
 resource kvRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(keyVault.id, workspacePrincipalId, keyVaultSecretsOfficer)
+  name: guid(keyVault.id, workspacePrincipalId, keyVaultSecretsOfficerRoleDefId)
   scope: keyVault
   properties: {
     principalId: workspacePrincipalId
     principalType: 'ServicePrincipal'
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', keyVaultSecretsOfficer)
+    roleDefinitionId: keyVaultSecretsOfficerRoleDefId
   }
 }
 
