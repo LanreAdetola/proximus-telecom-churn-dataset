@@ -27,7 +27,7 @@ az ml job create --file jobs/automl-churn-classification.yml
 This submits AutoML directly against your registered `churn-data-v1:1` data asset.
 No data prep step — AutoML handles featurization internally.
 
-### Option B: Pipeline (production-aligned)
+### Option B: Pipeline (MLOps-aligned)
 
 ```bash
 az ml job create --file pipelines/automl-churn-pipeline.yml

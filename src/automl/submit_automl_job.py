@@ -26,7 +26,7 @@ def main():
     ml_client = MLClient(
         credential=credential,
         subscription_id="<your-subscription-id>",       # Replace
-        resource_group_name="rg-proximus-churn-dev",     # Your RG
+        resource_group_name="rg-proximus-mlops-dev",      # Your RG
         workspace_name="mlw-proximus-churn-dev",         # Your workspace
     )
     print(f"Connected to workspace: {ml_client.workspace_name}")

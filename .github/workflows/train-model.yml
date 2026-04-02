@@ -9,7 +9,7 @@ permissions:
 
 env:
   AZURE_ML_WORKSPACE: mlw-proximus-churn-dev
-  AZURE_RESOURCE_GROUP: rg-proximus-churn-dev
+  AZURE_RESOURCE_GROUP: rg-proximus-mlops-dev
 
 jobs:
   submit-pipeline:

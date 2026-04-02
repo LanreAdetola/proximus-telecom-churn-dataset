@@ -9,7 +9,7 @@ param workspaceName string
 param location string
 
 @description('Environment tier')
-@allowed(['dev', 'prod'])
+@allowed(['dev'])
 param environment string
 
 @description('Indicates that compute provisioning is deferred')
